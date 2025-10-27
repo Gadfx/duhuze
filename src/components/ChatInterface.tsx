@@ -75,9 +75,14 @@ const ChatInterface = ({ language }: ChatInterfaceProps) => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${roomId}` },
-        (payload) => setMessages((prev) => [...prev, payload.new as Message])
+        (payload) => {
+          console.log('Received new message:', payload.new);
+          setMessages((prev) => [...prev, payload.new as Message]);
+        }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Message subscription status:', status);
+      });
 
     // Load existing messages
     loadMessages();
@@ -120,7 +125,7 @@ const ChatInterface = ({ language }: ChatInterfaceProps) => {
             if (profile) {
               setMatchedUser({
                 id: profile.id,
-                display_name: profile.is_anonymous ? "Anonymous" : profile.display_name,
+                display_name: (profile.display_name && profile.display_name.toLowerCase() !== "anonymous") ? profile.display_name : "User",
                 age: profile.age,
                 gender: profile.gender,
                 province: profile.province,
@@ -212,9 +217,13 @@ const ChatInterface = ({ language }: ChatInterfaceProps) => {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !roomId || !user) return;
+    if (!message.trim() || !roomId || !user) {
+      console.log('Cannot send message:', { message: message.trim(), roomId, user });
+      return;
+    }
 
     try {
+      console.log('Sending message:', { roomId, senderId: user.id, content: message.trim() });
       const { error } = await supabase
         .from("messages")
         .insert({
@@ -224,10 +233,15 @@ const ChatInterface = ({ language }: ChatInterfaceProps) => {
           message_type: "text",
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
 
+      console.log('Message sent successfully');
       setMessage("");
     } catch (error: any) {
+      console.error('Failed to send message:', error);
       toast({
         title: "Error",
         description: "Failed to send message",
@@ -409,10 +423,10 @@ const ChatInterface = ({ language }: ChatInterfaceProps) => {
                 <div className="relative w-full h-full bg-gray-200 rounded-lg overflow-hidden">
                   <VideoPlayer stream={remoteStream} className="absolute inset-0 rounded-lg" />
                   {matchedUser && (
-                    <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                      {matchedUser.display_name || "Anonymous"}
-                      {matchedUser.age && `, ${matchedUser.age}`}
-                    </div>
+                  <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                    {(matchedUser.display_name && matchedUser.display_name.toLowerCase() !== "anonymous") ? matchedUser.display_name : "User"}
+                    {matchedUser.age && `, ${matchedUser.age}`}
+                  </div>
                   )}
                 </div>
               ) : (
@@ -433,7 +447,7 @@ const ChatInterface = ({ language }: ChatInterfaceProps) => {
                         <div className="w-16 h-16 bg-green-500 rounded-full mx-auto mb-4 flex items-center justify-center">
                           <Video className="w-8 h-8 text-white" />
                         </div>
-                        <p className="font-semibold text-lg text-gray-700 mb-1">{matchedUser.display_name || "Anonymous"}</p>
+                        <p className="font-semibold text-lg text-gray-700 mb-1">{(matchedUser.display_name && matchedUser.display_name.toLowerCase() !== "anonymous") ? matchedUser.display_name : "User"}</p>
                         <p className="text-sm text-gray-500 mb-2">
                           {matchedUser.age && `${matchedUser.age} years old`}
                           {matchedUser.province && ` • ${matchedUser.province}`}

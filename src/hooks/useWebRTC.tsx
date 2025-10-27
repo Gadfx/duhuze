@@ -88,21 +88,15 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
       return;
     }
 
-    initializeMedia();
-
-    return () => {
-      cleanup();
-    };
-  }, [roomId, initializeMedia, cleanup]);
-
-  useEffect(() => {
-    if (!roomId) return;
-
-    console.log('Setting up WebRTC for room:', roomId, 'isInitiator:', isInitiator);
-    setIsConnecting(true);
-
-    const setupWebRTC = async () => {
+    const setupMediaAndWebRTC = async () => {
       try {
+        console.log('Initializing media devices...');
+        await initializeMedia();
+        console.log('Media initialized successfully');
+
+        console.log('Setting up WebRTC for room:', roomId, 'isInitiator:', isInitiator);
+        setIsConnecting(true);
+
         console.log('Creating RTCPeerConnection');
         peerConnection.current = new RTCPeerConnection(configuration);
 
@@ -115,6 +109,8 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
           if (state === 'connected') {
             setIsConnecting(false);
             console.log('WebRTC connection established successfully');
+            // Force a re-render to ensure video shows
+            setRemoteStream(prev => prev);
           } else if (state === 'failed' || state === 'disconnected') {
             setIsConnecting(false);
             console.log('Connection failed or disconnected, state:', state);
@@ -125,45 +121,59 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
           console.log('ICE connection state:', peerConnection.current?.iceConnectionState);
         };
 
-        // Add tracks when local stream becomes available
-        const addTracks = () => {
-          if (localStreamRef.current && peerConnection.current) {
-            console.log('Adding tracks to peer connection');
-            localStreamRef.current.getTracks().forEach(track => {
-              console.log(`Adding ${track.kind} track:`, track);
-              const sender = peerConnection.current!.addTrack(track, localStreamRef.current!);
-              if (track.kind === 'video') {
-                videoSenderRef.current = sender;
+        // Add tracks to peer connection
+        if (localStreamRef.current && peerConnection.current) {
+          console.log('Adding tracks to peer connection');
+          localStreamRef.current.getTracks().forEach(track => {
+            console.log(`Adding ${track.kind} track:`, track);
+            if (track.readyState === 'live') {
+              try {
+                const sender = peerConnection.current!.addTrack(track, localStreamRef.current!);
+                if (track.kind === 'video') {
+                  videoSenderRef.current = sender;
+                }
+                console.log(`Successfully added ${track.kind} track to peer connection`);
+              } catch (error) {
+                console.error(`Error adding ${track.kind} track:`, error);
               }
-              console.log(`Successfully added ${track.kind} track to peer connection`);
-            });
-          } else {
-            console.log('Cannot add tracks: localStream or peerConnection not available');
-          }
-        };
-
-        // Add tracks immediately if stream is available, or wait for it
-        if (localStreamRef.current) {
-          addTracks();
-        } else {
-          // Wait for stream to be initialized
-          const checkStream = setInterval(() => {
-            if (localStreamRef.current && peerConnection.current) {
-              addTracks();
-              clearInterval(checkStream);
+            } else {
+              console.warn(`Track ${track.kind} is not live, skipping`);
             }
-          }, 100);
-          setTimeout(() => clearInterval(checkStream), 10000); // Timeout after 10 seconds
+          });
         }
 
         peerConnection.current.ontrack = (event) => {
-          console.log('Received remote stream:', event.streams[0]);
-          console.log('Remote stream tracks:', event.streams[0].getTracks());
-          setRemoteStream(event.streams[0]);
+          console.log('Received remote track event:', event);
+          console.log('Event streams:', event.streams);
+          console.log('Event track:', event.track);
+
+          if (event.streams && event.streams[0]) {
+            console.log('Setting remote stream from streams[0]:', event.streams[0]);
+            console.log('Stream tracks:', event.streams[0].getTracks());
+            setRemoteStream(event.streams[0]);
+            console.log('Remote stream set successfully');
+          } else if (event.track) {
+            console.log('Creating stream from track:', event.track);
+            const stream = new MediaStream([event.track]);
+            console.log('Created stream:', stream);
+            setRemoteStream(stream);
+            console.log('Remote stream set from track successfully');
+          } else {
+            console.error('No remote stream or track received in ontrack event');
+          }
+
+          // Force re-render by triggering state update
+          setRemoteStream(prev => {
+            if (prev !== event.streams[0] && event.streams[0]) {
+              return event.streams[0];
+            }
+            return prev;
+          });
         };
 
         peerConnection.current.onicecandidate = (event) => {
           if (event.candidate && channelRef.current) {
+            console.log('Sending ICE candidate:', event.candidate);
             channelRef.current.send({
               type: 'broadcast',
               event: 'ice-candidate',
@@ -201,6 +211,7 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
             if (!peerConnection.current) return;
             try {
               await peerConnection.current.setRemoteDescription(new RTCSessionDescription(payload.answer));
+              console.log('Answer set successfully');
             } catch (error) {
               console.error('Error handling answer:', error);
             }
@@ -210,6 +221,7 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
             if (!peerConnection.current) return;
             try {
               await peerConnection.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
+              console.log('ICE candidate added successfully');
             } catch (error) {
               console.error('Error adding ICE candidate:', error);
             }
@@ -217,7 +229,7 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
           .subscribe(async (status) => {
             console.log('WebRTC channel status:', status, 'isInitiator:', isInitiator);
             if (status === 'SUBSCRIBED' && isInitiator && peerConnection.current) {
-              // Longer delay to ensure tracks are added and both peers are ready
+              // Wait for both peers to be ready
               setTimeout(async () => {
                 try {
                   console.log('Creating offer as initiator');
@@ -232,22 +244,24 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
                 } catch (error) {
                   console.error('Error creating offer:', error);
                 }
-              }, 2000); // Increased delay to 2 seconds
+              }, 500); // Reduced to 0.5 seconds for faster connection
             }
           });
+
       } catch (error) {
-        console.error('Error setting up WebRTC:', error);
+        console.error('Error setting up media or WebRTC:', error);
         setIsConnecting(false);
       }
     };
 
-    setupWebRTC();
+    setupMediaAndWebRTC();
 
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
+      cleanup();
     };
   }, [roomId, isInitiator]);
 

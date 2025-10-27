@@ -200,7 +200,7 @@ serve(async (req) => {
         JSON.stringify({
           match: {
             id: matchProfile.id,
-            display_name: matchProfile.is_anonymous ? "Anonymous" : matchProfile.display_name,
+            display_name: (matchProfile.display_name && matchProfile.display_name.toLowerCase() !== "anonymous") ? matchProfile.display_name : "User",
             age: matchProfile.age,
             gender: matchProfile.gender,
             province: matchProfile.province,
