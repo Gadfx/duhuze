@@ -128,23 +128,17 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
         // Add tracks when local stream becomes available
         const addTracks = () => {
           if (localStreamRef.current && peerConnection.current) {
-            const existingSenders = peerConnection.current.getSenders();
-            const hasVideo = existingSenders.some(sender => sender.track?.kind === 'video');
-            const hasAudio = existingSenders.some(sender => sender.track?.kind === 'audio');
-
-            if (!hasVideo || !hasAudio) {
-              localStreamRef.current.getTracks().forEach(track => {
-                // Only add if we don't already have this type of track
-                const existingSender = existingSenders.find(sender => sender.track?.kind === track.kind);
-                if (!existingSender) {
-                  const sender = peerConnection.current!.addTrack(track, localStreamRef.current!);
-                  if (track.kind === 'video') {
-                    videoSenderRef.current = sender;
-                  }
-                  console.log(`Added ${track.kind} track to peer connection`);
-                }
-              });
-            }
+            console.log('Adding tracks to peer connection');
+            localStreamRef.current.getTracks().forEach(track => {
+              console.log(`Adding ${track.kind} track:`, track);
+              const sender = peerConnection.current!.addTrack(track, localStreamRef.current!);
+              if (track.kind === 'video') {
+                videoSenderRef.current = sender;
+              }
+              console.log(`Successfully added ${track.kind} track to peer connection`);
+            });
+          } else {
+            console.log('Cannot add tracks: localStream or peerConnection not available');
           }
         };
 
@@ -159,7 +153,7 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
               clearInterval(checkStream);
             }
           }, 100);
-          setTimeout(() => clearInterval(checkStream), 5000); // Timeout after 5 seconds
+          setTimeout(() => clearInterval(checkStream), 10000); // Timeout after 10 seconds
         }
 
         peerConnection.current.ontrack = (event) => {
@@ -172,20 +166,20 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
           if (event.candidate && channelRef.current) {
             channelRef.current.send({
               type: 'broadcast',
-              event: 'webrtc-ice-candidate',
+              event: 'ice-candidate',
               payload: { candidate: event.candidate },
             });
           }
         };
 
-        channelRef.current = supabase.channel(`room:${roomId}`, {
+        channelRef.current = supabase.channel(`webrtc:${roomId}`, {
           config: {
             presence: { key: roomId },
           }
         });
 
         channelRef.current
-          .on('broadcast', { event: 'webrtc-offer' }, async ({ payload }) => {
+          .on('broadcast', { event: 'offer' }, async ({ payload }) => {
             console.log('Received offer:', payload);
             if (!peerConnection.current) return;
             try {
@@ -195,14 +189,14 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
               console.log('Sending answer:', answer);
               channelRef.current?.send({
                 type: 'broadcast',
-                event: 'webrtc-answer',
+                event: 'answer',
                 payload: { answer },
               });
             } catch (error) {
               console.error('Error handling offer:', error);
             }
           })
-          .on('broadcast', { event: 'webrtc-answer' }, async ({ payload }) => {
+          .on('broadcast', { event: 'answer' }, async ({ payload }) => {
             console.log('Received answer:', payload);
             if (!peerConnection.current) return;
             try {
@@ -211,7 +205,7 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
               console.error('Error handling answer:', error);
             }
           })
-          .on('broadcast', { event: 'webrtc-ice-candidate' }, async ({ payload }) => {
+          .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
             console.log('Received ICE candidate:', payload);
             if (!peerConnection.current) return;
             try {
@@ -223,7 +217,7 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
           .subscribe(async (status) => {
             console.log('WebRTC channel status:', status, 'isInitiator:', isInitiator);
             if (status === 'SUBSCRIBED' && isInitiator && peerConnection.current) {
-              // Small delay to ensure tracks are added
+              // Longer delay to ensure tracks are added and both peers are ready
               setTimeout(async () => {
                 try {
                   console.log('Creating offer as initiator');
@@ -232,13 +226,13 @@ export const useWebRTC = ({ roomId, isInitiator }: WebRTCHookProps) => {
                   console.log('Sending offer:', offer);
                   channelRef.current?.send({
                     type: 'broadcast',
-                    event: 'webrtc-offer',
+                    event: 'offer',
                     payload: { offer },
                   });
                 } catch (error) {
                   console.error('Error creating offer:', error);
                 }
-              }, 500);
+              }, 2000); // Increased delay to 2 seconds
             }
           });
       } catch (error) {
