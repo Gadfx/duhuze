@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Tugwemo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="./public/Tugwemo.png" alt="Tugwemo Logo" class="auth-logo">
+                <h1>Join Tugwemo</h1>
+                <p>Create your account to start connecting</p>
+            </div>
+
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" min="13" max="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sex">Sex</label>
+                    <select id="sex" name="sex" required>
+                        <option value="">Select your sex</option>
+                        <option value="boy">Boy</option>
+                        <option value="girl">Girl</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="sexOtherGroup" style="display: none;">
+                    <label for="sexOther">Please specify</label>
+                    <input type="text" id="sexOther" name="sexOther" placeholder="Please specify your sex">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" minlength="6" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+
+                <button type="submit" class="auth-btn primary">Create Account</button>
+            </form>
+
+            <div class="auth-links">
+                <p>Already have an account? <a href="login.html">Sign in</a></p>
+                <p><a href="index.html">Back to Home</a></p>
+            </div>
+
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+
+    <script>
+        const registerForm = document.getElementById('registerForm');
+        const messageDiv = document.getElementById('message');
+        const sexSelect = document.getElementById('sex');
+        const sexOtherGroup = document.getElementById('sexOtherGroup');
+        const sexOtherInput = document.getElementById('sexOther');
+
+        // Show/hide sex other field based on selection
+        sexSelect.addEventListener('change', () => {
+            if (sexSelect.value === 'other') {
+                sexOtherGroup.style.display = 'block';
+                sexOtherInput.required = true;
+            } else {
+                sexOtherGroup.style.display = 'none';
+                sexOtherInput.required = false;
+                sexOtherInput.value = '';
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const age = document.getElementById('age').value;
+            const sex = document.getElementById('sex').value;
+            const sexOther = document.getElementById('sexOther').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email, age: parseInt(age), sex, sexOther, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    showMessage('Registration successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    showMessage(data.message || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+            }
+        });
+
+        function showMessage(message, type) {
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
