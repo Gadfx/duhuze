@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "lovable-tagger": "^1.1.11"
+    "lovable-tagger": "^1.1.11",
+    "zod": "^4.1.12"
   }
 }

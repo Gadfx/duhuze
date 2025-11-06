@@ -28,6 +28,15 @@ import {
   markNotificationRead
 } from '../controllers/adminController'
 import { authenticateToken, requireModerator, requireSuperAdmin } from '../middlewares/auth'
+import { validateParams, validateBody } from '../middlewares/validate'
+import { 
+  userIdParamSchema, 
+  banUserSchema, 
+  muteUserSchema, 
+  kickUserSchema,
+  adIdParamSchema,
+  reportIdParamSchema 
+} from '../validation/authSchemas'
 
 interface AuthRequest extends express.Request {
   user?: any
@@ -46,13 +55,13 @@ router.get('/welcome', requireModerator, getWelcome)
 
 // User Management Routes
 router.get('/users', requireModerator, getUsers)
-router.put('/users/:userId', requireModerator, updateUser)
-router.post('/users/:userId/ban', requireModerator, banUser)
-router.post('/users/:userId/unban', requireModerator, unbanUser)
-router.post('/users/:userId/mute', requireModerator, muteUser)
-router.post('/users/:userId/unmute', requireModerator, unmuteUser)
-router.get('/users/:userId', requireModerator, viewUser)
-router.post('/users/:userId/kick', requireModerator, async (req: AuthRequest, res) => {
+router.put('/users/:userId', requireModerator, validateParams(userIdParamSchema), updateUser)
+router.post('/users/:userId/ban', requireModerator, validateParams(userIdParamSchema), validateBody(banUserSchema), banUser)
+router.post('/users/:userId/unban', requireModerator, validateParams(userIdParamSchema), unbanUser)
+router.post('/users/:userId/mute', requireModerator, validateParams(userIdParamSchema), validateBody(muteUserSchema), muteUser)
+router.post('/users/:userId/unmute', requireModerator, validateParams(userIdParamSchema), unmuteUser)
+router.get('/users/:userId', requireModerator, validateParams(userIdParamSchema), viewUser)
+router.post('/users/:userId/kick', requireModerator, validateParams(userIdParamSchema), validateBody(kickUserSchema), async (req: AuthRequest, res) => {
   try {
     const { userId } = req.params
     const { reason } = req.body
@@ -91,14 +100,13 @@ router.post('/users/:userId/kick', requireModerator, async (req: AuthRequest, re
 
     res.json({ message: 'User kicked successfully' })
   } catch (error) {
-    console.error('Kick user error:', error)
     res.status(500).json({ message: 'Failed to kick user' })
   }
 })
 
 // Reports Management Routes
 router.get('/reports', requireModerator, getReports)
-router.post('/reports/:reportId/resolve', requireModerator, resolveReport)
+router.post('/reports/:reportId/resolve', requireModerator, validateParams(reportIdParamSchema), resolveReport)
 
 // Analytics Routes
 router.get('/analytics', requireModerator, getAnalytics)
@@ -110,9 +118,9 @@ router.put('/settings', requireSuperAdmin, updateSettings)
 // Ads Management Routes
 router.get('/ads', requireModerator, getAds)
 router.post('/ads', requireModerator, createAd)
-router.put('/ads/:adId', requireModerator, updateAd)
-router.delete('/ads/:adId', requireModerator, deleteAd)
-router.patch('/ads/:adId/toggle', requireModerator, toggleAd)
+router.put('/ads/:adId', requireModerator, validateParams(adIdParamSchema), updateAd)
+router.delete('/ads/:adId', requireModerator, validateParams(adIdParamSchema), deleteAd)
+router.patch('/ads/:adId/toggle', requireModerator, validateParams(adIdParamSchema), toggleAd)
 router.post('/upload-ad-image', requireModerator, async (req: AuthRequest, res) => {
   try {
     const multer = require('multer')
@@ -160,7 +168,6 @@ router.post('/upload-ad-image', requireModerator, async (req: AuthRequest, res) 
       res.json({ imageUrl })
     })
   } catch (error) {
-    console.error('Upload ad image error:', error)
     res.status(500).json({ message: 'Failed to upload image' })
   }
 })

@@ -29,9 +29,12 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set')
+    }
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     )
 
@@ -45,7 +48,6 @@ export const login = async (req: Request, res: Response) => {
       }
     })
   } catch (error) {
-    console.error('Login error:', error)
     res.status(500).json({ message: 'Server error' })
   }
 }
@@ -74,9 +76,12 @@ export const register = async (req: Request, res: Response) => {
     await user.save()
 
     // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set')
+    }
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     )
 
@@ -93,7 +98,6 @@ export const register = async (req: Request, res: Response) => {
       }
     })
   } catch (error) {
-    console.error('Registration error:', error)
     res.status(500).json({ message: 'Server error' })
   }
 }
@@ -120,9 +124,12 @@ export const userLogin = async (req: Request, res: Response) => {
     }
 
     // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set')
+    }
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     )
 
@@ -137,7 +144,6 @@ export const userLogin = async (req: Request, res: Response) => {
       }
     })
   } catch (error) {
-    console.error('User login error:', error)
     res.status(500).json({ message: 'Server error' })
   }
 }
@@ -154,7 +160,6 @@ export const getProfile = async (req: Request, res: Response) => {
       }
     })
   } catch (error) {
-    console.error('Get profile error:', error)
     res.status(500).json({ message: 'Server error' })
   }
 }

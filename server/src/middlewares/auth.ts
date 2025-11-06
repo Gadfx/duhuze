@@ -15,7 +15,10 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
       return res.status(401).json({ message: 'Access token required' })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set')
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as any
     const user = await User.findById(decoded.userId)
 
     if (!user) {

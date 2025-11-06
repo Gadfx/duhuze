@@ -1,18 +1,20 @@
 import express from 'express'
 import { login, register, userLogin, getProfile } from '../controllers/authController'
 import { authenticateToken } from '../middlewares/auth'
+import { validateBody } from '../middlewares/validate'
+import { loginSchema, registerSchema } from '../validation/authSchemas'
 import Ad from '../models/Ad'
 
 const router = express.Router()
 
 // Admin login route
-router.post('/login', login)
+router.post('/login', validateBody(loginSchema), login)
 
 // User registration
-router.post('/register', register)
+router.post('/register', validateBody(registerSchema), register)
 
 // User login
-router.post('/user/login', userLogin)
+router.post('/user/login', validateBody(loginSchema), userLogin)
 
 // Get current user profile (protected)
 router.get('/profile', authenticateToken, getProfile)

@@ -19,7 +19,10 @@ export const setupAdminSocket = (io: Server) => {
         return next(new Error('Authentication token required'))
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any
+      if (!process.env.JWT_SECRET) {
+        return next(new Error('JWT_SECRET not configured'))
+      }
+      const decoded = jwt.verify(token, process.env.JWT_SECRET) as any
       const user = await User.findById(decoded.userId)
 
       if (!user || !['moderator', 'super_admin'].includes(user.role)) {
@@ -34,7 +37,6 @@ export const setupAdminSocket = (io: Server) => {
   })
 
   adminNamespace.on('connection', (socket: AuthenticatedSocket) => {
-    console.log(`Admin connected: ${socket.user.email} (${socket.user.role})`)
 
     // Join role-based room for targeted broadcasts
     socket.join(socket.user.role)
@@ -69,7 +71,6 @@ export const setupAdminSocket = (io: Server) => {
 
         socket.emit('user-kicked-success', { userId })
       } catch (error) {
-        console.error('Kick user error:', error)
         socket.emit('error', { message: 'Failed to kick user' })
       }
     })
@@ -107,7 +108,6 @@ export const setupAdminSocket = (io: Server) => {
 
         socket.emit('user-ban-success', { userId })
       } catch (error) {
-        console.error('Ban user error:', error)
         socket.emit('error', { message: 'Failed to ban user' })
       }
     })
@@ -146,7 +146,6 @@ export const setupAdminSocket = (io: Server) => {
 
         socket.emit('user-mute-success', { userId })
       } catch (error) {
-        console.error('Mute user error:', error)
         socket.emit('error', { message: 'Failed to mute user' })
       }
     })
@@ -160,7 +159,6 @@ export const setupAdminSocket = (io: Server) => {
 
         socket.emit('online-users', { users: onlineUsers })
       } catch (error) {
-        console.error('Get online users error:', error)
         socket.emit('error', { message: 'Failed to get online users' })
       }
     })
@@ -179,7 +177,6 @@ export const setupAdminSocket = (io: Server) => {
 
         socket.emit('room-stats', roomStats)
       } catch (error) {
-        console.error('Get room stats error:', error)
         socket.emit('error', { message: 'Failed to get room stats' })
       }
     })
@@ -203,7 +200,6 @@ export const setupAdminSocket = (io: Server) => {
 
         socket.emit('system-stats', systemStats)
       } catch (error) {
-        console.error('Get system stats error:', error)
         socket.emit('error', { message: 'Failed to get system stats' })
       }
     })
@@ -232,7 +228,6 @@ export const setupAdminSocket = (io: Server) => {
 
         socket.emit('broadcast-success')
       } catch (error) {
-        console.error('Broadcast message error:', error)
         socket.emit('error', { message: 'Failed to send broadcast' })
       }
     })
@@ -262,14 +257,13 @@ export const setupAdminSocket = (io: Server) => {
 
         socket.emit('maintenance-toggle-success', { enabled })
       } catch (error) {
-        console.error('Toggle maintenance error:', error)
         socket.emit('error', { message: 'Failed to toggle maintenance mode' })
       }
     })
 
     // Handle disconnection
     socket.on('disconnect', () => {
-      console.log(`Admin disconnected: ${socket.user.email}`)
+      // Admin disconnected
     })
   })
 
