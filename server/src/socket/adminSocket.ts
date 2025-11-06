@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io'
 import jwt from 'jsonwebtoken'
 import User from '../models/User'
 import Log from '../models/Log'
+import { hasAnyRole } from '../lib/roleManager'
 
 interface AuthenticatedSocket extends Socket {
   user?: any
@@ -25,7 +26,12 @@ export const setupAdminSocket = (io: Server) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET) as any
       const user = await User.findById(decoded.userId)
 
-      if (!user || !['moderator', 'super_admin'].includes(user.role)) {
+      if (!user) {
+        return next(new Error('User not found'))
+      }
+
+      const hasPermission = await hasAnyRole(user._id.toString(), ['moderator', 'super_admin'])
+      if (!hasPermission) {
         return next(new Error('Insufficient permissions'))
       }
 
@@ -36,10 +42,9 @@ export const setupAdminSocket = (io: Server) => {
     }
   })
 
-  adminNamespace.on('connection', (socket: AuthenticatedSocket) => {
-
-    // Join role-based room for targeted broadcasts
-    socket.join(socket.user.role)
+  adminNamespace.on('connection', async (socket: AuthenticatedSocket) => {
+    // Note: Role-based rooms removed since users can have multiple roles
+    // Implement alternative broadcast strategy if needed
 
     // Real-time user management events
     socket.on('kick-user', async (data: { userId: string, reason: string }) => {

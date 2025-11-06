@@ -1,6 +1,8 @@
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import User from '../models/User'
+import UserRole from '../models/UserRole'
+import { hasAnyRole, getHighestRole, getUserRoles } from '../lib/roleManager'
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -18,7 +20,8 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check if user has admin role
-    if (!['moderator', 'super_admin'].includes(user.role)) {
+    const hasAdminRole = await hasAnyRole(user._id.toString(), ['moderator', 'super_admin'])
+    if (!hasAdminRole) {
       return res.status(403).json({ message: 'Access denied. Admin privileges required.' })
     }
 
@@ -32,8 +35,10 @@ export const login = async (req: Request, res: Response) => {
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET environment variable is not set')
     }
+    
+    const role = await getHighestRole(user._id.toString())
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     )
@@ -44,7 +49,7 @@ export const login = async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role
       }
     })
   } catch (error) {
@@ -69,18 +74,23 @@ export const register = async (req: Request, res: Response) => {
       password,
       age,
       sex,
-      sexOther,
-      role: 'user'
+      sexOther
     })
 
     await user.save()
+
+    // Assign default 'user' role
+    await UserRole.create({
+      userId: user._id.toString(),
+      role: 'user'
+    })
 
     // Generate JWT token
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET environment variable is not set')
     }
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     )
@@ -94,7 +104,7 @@ export const register = async (req: Request, res: Response) => {
         age: user.age,
         sex: user.sex,
         sexOther: user.sexOther,
-        role: user.role
+        role: 'user'
       }
     })
   } catch (error) {
@@ -127,8 +137,10 @@ export const userLogin = async (req: Request, res: Response) => {
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET environment variable is not set')
     }
+    
+    const role = await getHighestRole(user._id.toString())
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     )
@@ -140,7 +152,7 @@ export const userLogin = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         age: user.age,
-        role: user.role
+        role
       }
     })
   } catch (error) {
@@ -151,12 +163,14 @@ export const userLogin = async (req: Request, res: Response) => {
 export const getProfile = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user
+    const role = await getHighestRole(user._id.toString())
+    
     res.json({
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role
       }
     })
   } catch (error) {

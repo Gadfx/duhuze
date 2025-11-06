@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import adminRoutes from './routes/admin';
 import authRoutes from './routes/auth';
+import roleRoutes from './routes/roles';
 import { setupAdminSocket } from './socket/adminSocket';
 import Ad from './models/Ad';
 
@@ -28,6 +29,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tugwemo')
 // Routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/roles', roleRoutes);
 
 // --- Serve uploaded files ---
 app.use('/uploads', express.static(path.join(__dirname, "../uploads")));

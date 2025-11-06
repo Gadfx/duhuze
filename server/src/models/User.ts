@@ -9,7 +9,6 @@ export interface IUser extends Document {
   age?: number
   sex?: 'boy' | 'girl' | 'other'
   sexOther?: string
-  role: 'user' | 'moderator' | 'super_admin'
   isOnline: boolean
   lastSeen: Date
   connectionCount: number
@@ -53,11 +52,6 @@ const userSchema = new Schema<IUser>({
   sexOther: {
     type: String,
     trim: true
-  },
-  role: {
-    type: String,
-    enum: ['user', 'moderator', 'super_admin'],
-    default: 'user'
   },
   isOnline: {
     type: Boolean,
