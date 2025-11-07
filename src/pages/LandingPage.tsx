@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -189,18 +189,18 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap gap-6 justify-center mb-4">
-            <a href="/terms.html" className="text-muted-foreground hover:text-foreground transition-colors">
-              Terms of Service
-            </a>
-            <a href="/privacy.html" className="text-muted-foreground hover:text-foreground transition-colors">
-              Privacy Policy
-            </a>
-            <a href="/contact.html" className="text-muted-foreground hover:text-foreground transition-colors">
-              Contact Us
-            </a>
-          </div>
-          <p className="text-center text-muted-foreground">&copy; 2024 Tugwemo. All rights reserved.</p>
+        <div className="flex flex-wrap gap-6 justify-center mb-4">
+          <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+            Terms of Service
+          </Link>
+          <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+            Privacy Policy
+          </Link>
+          <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+            Contact Us
+          </Link>
+        </div>
+        <p className="text-center text-muted-foreground">&copy; 2024 Tugwemo. All rights reserved.</p>
         </div>
       </footer>
     </div>
