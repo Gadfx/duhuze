@@ -1,6 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import "../styles/landing.css";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -55,154 +55,142 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      <section className="hero">
+        <div className="hero-bg-elements">
+          <div className="floating-shape shape1"></div>
+          <div className="floating-shape shape2"></div>
+          <div className="floating-shape shape3"></div>
+          <div className="floating-shape shape4"></div>
         </div>
 
-        <div className="container mx-auto px-4 z-10">
-          <div className="text-center space-y-8">
-            <h1 className="text-7xl md:text-8xl font-black uppercase tracking-tight">
-              TUGWEMO
-            </h1>
+        <div className="hero-content">
+          <div className="logo-container">
+            <h1 className="text-logo">TUGWEMO</h1>
+          </div>
 
-            <div className="h-12 flex items-center justify-center">
-              <span className="text-2xl md:text-3xl text-muted-foreground">
-                {typingText}
-                <span className="animate-pulse">|</span>
-              </span>
+          <div className="typing-container">
+            <span id="typing-text">{typingText}</span>
+            <span className="cursor">|</span>
+          </div>
+
+          <div className="social-proof">
+            <div className="proof-item">
+              <div className="status-dot"></div>
+              <span>10,000+ Active Users</span>
             </div>
-
-            <div className="flex flex-wrap gap-6 items-center justify-center text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span>10,000+ Active Users</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>🛡️</span>
-                <span>100% Safe & Secure</span>
-              </div>
+            <div className="proof-item">
+              <span>🛡️</span>
+              <span>100% Safe & Secure</span>
             </div>
+          </div>
 
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Rwanda's premier platform for anonymous video chat and meaningful connections.
-              Experience the future of social interaction with cutting-edge technology and unmatched privacy.
-            </p>
+          <p className="hero-description">
+            Rwanda's premier platform for anonymous video chat and meaningful connections.
+            Experience the future of social interaction with cutting-edge technology and unmatched privacy.
+          </p>
 
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button size="lg" onClick={handleGetStarted} className="text-lg px-8">
-                Get Started Free
-              </Button>
-              <Button size="lg" variant="secondary" onClick={handleGetStarted} className="text-lg px-8">
-                Tangira
-              </Button>
+          <div className="cta-buttons">
+            <button className="cta-button primary" onClick={handleGetStarted}>
+              <span>📹</span>
+              Get Started Free
+            </button>
+            <button className="cta-button secondary" onClick={handleGetStarted}>
+              Tangira
+            </button>
+          </div>
+
+          <div className="trust-indicators">
+            <div className="indicator">
+              <span className="indicator-icon">👥</span>
+              <div className="indicator-text">10K+ Users</div>
             </div>
-
-            <div className="flex flex-wrap gap-8 justify-center pt-8">
-              <div className="text-center">
-                <div className="text-3xl mb-2">👥</div>
-                <div className="text-sm text-muted-foreground">10K+ Users</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">🌍</div>
-                <div className="text-sm text-muted-foreground">Global Access</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">🛡️</div>
-                <div className="text-sm text-muted-foreground">Enterprise Security</div>
-              </div>
+            <div className="indicator">
+              <span className="indicator-icon">🌍</span>
+              <div className="indicator-text">Global Access</div>
+            </div>
+            <div className="indicator">
+              <span className="indicator-icon">🛡️</span>
+              <div className="indicator-text">Enterprise Security</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-card/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Why Choose Tugwemo?</h2>
-            <p className="text-muted-foreground text-lg">
-              Experience the most advanced anonymous video chat platform
-            </p>
+      <section className="features">
+        <div className="container">
+          <div className="section-header">
+            <h2>Why Choose Tugwemo?</h2>
+            <p>Experience the most advanced anonymous video chat platform</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                icon: "📹",
-                title: "Anonymous Video Chat",
-                description: "Connect face-to-face with random people or skip to the next. Your privacy is our priority."
-              },
-              {
-                icon: "💬",
-                title: "Rich Text Chat",
-                description: "Chat alongside your video call with emojis, GIFs, and cultural expressions."
-              },
-              {
-                icon: "🛡️",
-                title: "Enterprise Security",
-                description: "Bank-level encryption and AI-powered moderation keep our community safe."
-              },
-              {
-                icon: "🌍",
-                title: "Multilingual Support",
-                description: "Chat in Kinyarwanda, French, English, or Swahili."
-              },
-              {
-                icon: "👥",
-                title: "Smart Matching",
-                description: "Advanced algorithms connect you with people who share your interests."
-              },
-              {
-                icon: "❤️",
-                title: "Cultural Connection",
-                description: "Rwanda-specific features celebrating our rich cultural heritage."
-              }
-            ].map((feature, index) => (
-              <div key={index} className="p-6 rounded-lg bg-card border border-border hover:border-primary transition-colors">
-                <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
+          <div className="features-grid">
+            <div className="feature-item">
+              <div className="feature-icon">📹</div>
+              <h3>Anonymous Video Chat</h3>
+              <p>Connect face-to-face with random people or skip to the next. Your privacy is our priority.</p>
+            </div>
+
+            <div className="feature-item">
+              <div className="feature-icon">💬</div>
+              <h3>Rich Text Chat</h3>
+              <p>Chat alongside your video call with emojis, GIFs, and cultural expressions.</p>
+            </div>
+
+            <div className="feature-item">
+              <div className="feature-icon">🛡️</div>
+              <h3>Enterprise Security</h3>
+              <p>Bank-level encryption and AI-powered moderation keep our community safe.</p>
+            </div>
+
+            <div className="feature-item">
+              <div className="feature-icon">🌍</div>
+              <h3>Multilingual Support</h3>
+              <p>Chat in Kinyarwanda, French, English, or Swahili.</p>
+            </div>
+
+            <div className="feature-item">
+              <div className="feature-icon">👥</div>
+              <h3>Smart Matching</h3>
+              <p>Advanced algorithms connect you with people who share your interests.</p>
+            </div>
+
+            <div className="feature-item">
+              <div className="feature-icon">❤️</div>
+              <h3>Cultural Connection</h3>
+              <p>Rwanda-specific features celebrating our rich cultural heritage.</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Connect?</h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of Rwandans making meaningful connections every day.
-          </p>
-          <Button size="lg" onClick={handleGetStarted} className="text-lg px-12">
-            <span className="mr-2">📹</span>
-            Start Your Journey
-          </Button>
+      <section className="cta-section">
+        <div className="container">
+          <div className="cta-content">
+            <h2>Ready to Connect?</h2>
+            <p>Join thousands of Rwandans making meaningful connections every day.</p>
+            <button className="cta-button-large primary" onClick={handleGetStarted}>
+              <span>📹</span>
+              Start Your Journey
+            </button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-border">
-        <div className="container mx-auto px-4">
-        <div className="flex flex-wrap gap-6 justify-center mb-4">
-          <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-            Terms of Service
-          </Link>
-          <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-            Privacy Policy
-          </Link>
-          <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
-            Contact Us
-          </Link>
-        </div>
-        <p className="text-center text-muted-foreground">&copy; 2024 Tugwemo. All rights reserved.</p>
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-links">
+            <Link to="/terms">Terms of Service</Link>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/contact">Contact Us</Link>
+          </div>
+          <p className="copyright">&copy; 2024 Tugwemo. All rights reserved.</p>
         </div>
       </footer>
-    </div>
+    </>
   );
 }
