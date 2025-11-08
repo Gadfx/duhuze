@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import "@/styles/landing.css";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -14,116 +16,119 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     if (!isLogin && formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
+      setLoading(false);
       return;
     }
 
-    const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
-
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
-        }),
-      });
+        });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
+        if (error) throw error;
+        toast.success("Welcome back!");
         navigate("/video");
       } else {
-        toast.error(data.message || "Authentication failed");
+        const { error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/video`
+          }
+        });
+
+        if (error) throw error;
+        toast.success("Account created! Please check your email.");
+        navigate("/video");
       }
-    } catch (error) {
-      toast.error("Connection error. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Authentication failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-5xl font-black mb-2">TUGWEMO</h1>
-          <p className="text-muted-foreground">
-            {isLogin ? "Welcome back" : "Create your account"}
-          </p>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="logo-container">
+            <div className="text-logo">TUGWEMO</div>
+          </div>
+          <h2>{isLogin ? "Welcome Back" : "Create Account"}</h2>
+          <p>{isLogin ? "Sign in to continue your journey" : "Join the community today"}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-card p-8 rounded-lg border border-border">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-2">
-              Email
-            </label>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
             <input
               id="email"
               type="email"
               required
-              className="w-full px-4 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="your@email.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-2">
-              Password
-            </label>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
             <input
               id="password"
               type="password"
               required
-              className="w-full px-4 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="••••••••"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
           </div>
 
           {!isLogin && (
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
-                Confirm Password
-              </label>
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
               <input
                 id="confirmPassword"
                 type="password"
                 required
-                className="w-full px-4 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="••••••••"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               />
             </div>
           )}
 
-          <Button type="submit" className="w-full" size="lg">
-            {isLogin ? "Sign In" : "Sign Up"}
-          </Button>
+          <button type="submit" className="auth-btn" disabled={loading}>
+            {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
+          </button>
 
-          <p className="text-center text-sm text-muted-foreground">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline"
-            >
-              {isLogin ? "Sign up" : "Sign in"}
-            </button>
-          </p>
+          <div className="auth-footer">
+            <p>
+              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="toggle-auth"
+              >
+                {isLogin ? "Sign up" : "Sign in"}
+              </button>
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="back-btn"
+          >
+            ← Back to Home
+          </button>
         </form>
-
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="w-full"
-        >
-          Back to Home
-        </Button>
       </div>
     </div>
   );
